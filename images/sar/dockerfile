@@ -4,6 +4,8 @@ FROM jupyter/base-notebook:hub-1.4.2 as release
 USER root
 WORKDIR /
 
+RUN set -e
+
 RUN apt update && \
     apt install --no-install-recommends -y \
         software-properties-common \
@@ -14,19 +16,6 @@ RUN apt update && \
 
 COPY tests/* /tests/
 
-# SNAP  ****************************************************************
-RUN apt install --no-install-recommends -y \
-    default-jdk-headless
-
-# TRAIN  ****************************************************************
-RUN apt install --no-install-recommends -y \
-    gdal-bin
-
-COPY TRAIN/ /usr/local/TRAIN/
-
-# MAPREADY ****************************************************************
-RUN set -e 
-
 RUN apt install -y \
     proj-bin \
     geotiff-bin \
@@ -36,22 +25,6 @@ RUN apt install -y \
     libnetcdf-dev \
     libgdal-dev \
     libgsl-dev
-
-RUN cp /usr/lib/x86_64-linux-gnu/libgeotiff.so.5 /usr/lib/x86_64-linux-gnu/libgeotiff.so.2 && \
-    cp /usr/lib/libgdal.so /usr/lib/libgdal.so.20 && \
-    cp /usr/lib/x86_64-linux-gnu/libproj.so.19 /usr/lib/x86_64-linux-gnu/libproj.so.12 && \
-    cp /usr/lib/x86_64-linux-gnu/libhdf5_serial.so.103 /usr/lib/x86_64-linux-gnu/libhdf5_serial.so.100 && \
-    cp /usr/lib/x86_64-linux-gnu/libnetcdf.so.15 /usr/lib/x86_64-linux-gnu/libnetcdf.so.13
-
-ENV MAPREADY_HOME /usr/local/mapready/
-
-COPY mapready-build/bin/* $MAPREADY_HOME/bin/
-COPY mapready-build/doc/* $MAPREADY_HOME/doc/
-COPY mapready-build/lib/* $MAPREADY_HOME/lib/
-COPY mapready-build/man/* $MAPREADY_HOME/man/
-COPY mapready-build/share/* $MAPREADY_HOME/share/
-
-ENV PATH $PATH:$MAPREADY_HOME/bin/:$MAPREADY_HOME/lib/:$MAPREADY_HOME/share/
 
 # Manually update nbconvert. A dicrepancy in the versioning causes a 500 when opening a notebook. https://github.com/jupyter/notebook/issues/3629#issuecomment-399408222
 # Remember, here pip is updating within the condas namespace where jupyter notebook items are held.
@@ -74,23 +47,24 @@ RUN apt update && \
         openssh-client \
         libgl1-mesa-glx \
         emacs \
-        gnupg2
+        gnupg2 \
+        jq \
+        gfortran
 
 RUN pip install 'awscli==1.19.60' 'boto3==1.17.60' 'pyyaml==5.4.1' 'bokeh==2.3.1'
 
 # Install any other custom and jupyter libaries like widgets
 # Use pip (conda version) since we want to corner off GIAnT's work and also run it with Jupyter
-RUN pip install asf-hyp3==3.0.3
-RUN conda install -c conda-forge jupyter_contrib_nbextensions=0.5.1 jupyter-resource-usage nb_conda_kernels -y
+RUN conda install -c conda-forge jupyter_contrib_nbextensions=0.5.1 jupyter-resource-usage nb_conda_kernels jupyterlab ipympl -y
 
-# Update jupyter lab manually to get the lastest version
-RUN pip install -U jupyterlab
+# Install OpenSARlab's url-widget
+RUN python -m pip install url-widget
 
 # Make sure that any files in the home directory are jovyan permission
 RUN chown -R jovyan:users $HOME/
 
 # Make sure mamba (within conda) has write access
-RUN chmod -R 755 /opt/conda/pkgs
+RUN chmod -R 755 /opt/conda/
 
 # Add sudo group user 599 elevation
 RUN addgroup -gid 599 elevation \
@@ -111,5 +85,4 @@ USER jovyan
 
 FROM release as testing 
 
-RUN bash /tests/mapready.sh
 RUN bash /tests/sar.sh
