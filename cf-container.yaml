@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+
+  ContainerNamespace:
+    Type: String
+    Default: ''
+
+  CostTagKey:
+    Type: String
+    Default: "osl-billing"
+
+  CostTagValue:
+    Type: String
+    Default: ''
+
+  CodeStarConnectionArn:
+    Type: String
+    Description: The Arn goes here. Connection created via https://docs.aws.amazon.com/dtconsole/latest/userguide/connections-create-github.html
+    Default: ''
+
+  GitHubFullRepo:
+    Type: String
+    Description: Owner/RepoName of desired GitHub path https://github.com/Owner/RepoName. 
+    Default: 'ASFOpenSARlab/opensarlab-container'
+
+  GitHubBranchName:
+    Type: String
+    Default: 'main'
+  
+Resources:
+
+  ContainerPipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::Region}-${CostTagValue}-container-pipeline-role
+      AssumeRolePolicyDocument:
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: 
+              - cloudformation.amazonaws.com
+              - codebuild.amazonaws.com
+              - codepipeline.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  ImagesCodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${CostTagValue}-images
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:5.0
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        PrivilegedMode: true
+      ServiceRole: !GetAtt ContainerPipelineRole.Arn
+      Tags:
+        - Key: !Sub ${CostTagKey}
+          Value: !Sub ${CostTagValue}
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+
+          env:
+            git-credential-helper: yes
+            shell: bash
+
+          phases:
+            install:
+              runtime-versions:
+                python: 3.9
+            build:
+              on-failure: ABORT
+              commands:
+              - echo "Logging into ECR...";
+                docker login -u AWS -p $(aws ecr get-login-password --region ${AWS::Region}) ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+              - export DOCKER_REGISTRY="${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ContainerNamespace}"
+              - cd images;
+                for p in $(ls -d */ | cut -f1 -d/); do
+                  echo "Building image '$p'";
+                  python3 check_ecr.py --image_name $p --aws_region ${AWS::Region} --container_namespace ${ContainerNamespace};
+                  cd $p;
+                  bash build.sh $p;
+                  cd ..;
+                done
+
+  PipelineBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub codepipeline-${AWS::Region}-${CostTagValue}-container
+      Tags:
+        - Key: !Sub ${CostTagKey}
+          Value: !Sub ${CostTagValue}
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties: 
+      ArtifactStore: 
+        Type: S3
+        Location: !Ref PipelineBucket
+      Name: !Sub ${CostTagValue}-Container-Pipeline
+      RestartExecutionOnUpdate: False
+      RoleArn: !GetAtt ContainerPipelineRole.Arn
+      Tags: 
+        - Key: !Sub ${CostTagKey}
+          Value: !Sub ${CostTagValue}
+      Stages:
+        - Name: !Sub ${CostTagValue}-GitHub-Source
+          Actions:
+            - Name: source
+              InputArtifacts: []
+              ActionTypeId:
+                Version: '1'
+                Owner: AWS
+                Category: Source
+                Provider: CodeStarSourceConnection
+              OutputArtifacts:
+                - Name: SourceArtifact
+              RunOrder: 1
+              Configuration:
+                ConnectionArn: !Sub ${CodeStarConnectionArn}
+                FullRepositoryId: !Sub ${GitHubFullRepo}
+                BranchName: !Sub ${GitHubBranchName}
+                OutputArtifactFormat: CODEBUILD_CLONE_REF
+
+        - Name: !Sub ${CostTagValue}-Build-Images
+          Actions:
+            - Name: images
+              RunOrder: 1
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Ref ImagesCodeBuild
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts: []
+              Region: !Sub ${AWS::Region}
