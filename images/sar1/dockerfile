@@ -83,6 +83,7 @@ RUN python3 -m pip install \
         ### For ASF
         url-widget \
         opensarlab-frontend==1.4.5 \
+        jupyterlab-jupyterbook-navigation==0.1.4 \
         ### For pyGMTSAR
         pygmtsar &&\
     cd /tmp &&\
