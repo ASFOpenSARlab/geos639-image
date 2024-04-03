@@ -69,6 +69,8 @@ RUN mamba install -c conda-forge -y \
     jupyter-resource-usage \
     nb_conda_kernels \
     jupyterlab-spellchecker \
+    jupyterlab-git \
+    panel \
     ipympl \
     jupyterlab_widgets \
     ipywidgets \
@@ -76,13 +78,15 @@ RUN mamba install -c conda-forge -y \
     dask-gateway \
     dask \
     distributed \
+    zstd==1.5.5 \
+    zstandard==0.21.0 \
     --
 
 # PIP and other PACKAGES
 RUN python3 -m pip install \
         ### For ASF
         url-widget \
-        opensarlab-frontend==1.4.5 \
+        opensarlab-frontend==1.5.1 \
         jupyterlab-jupyterbook-navigation==0.1.4 \
         ### For pyGMTSAR
         pygmtsar &&\
