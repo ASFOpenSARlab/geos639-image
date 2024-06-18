@@ -137,10 +137,6 @@ RUN chmod -R 775 /home/jovyan &&\
 WORKDIR /home/jovyan
 USER jovyan
 
-##########################################
-
-FROM release as testing 
-
-COPY tests/* /tests/
-
-RUN bash /tests/*.sh
+RUN mkdir /tmp/helper_scripts
+COPY helper_scripts/* /tmp/helper_scripts
+RUN bash /tmp/helper_scripts/post_hook.sh
