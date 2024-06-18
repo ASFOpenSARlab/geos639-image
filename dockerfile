@@ -125,14 +125,8 @@ RUN python3 -m pip install \
 ### GMTSAR
 ENV PATH=/usr/local/GMTSAR/bin:$PATH
 
-##########################################################
-###
-### Addtional packages for the specific container image
-###
-##########################################################
-
 RUN chmod -R 775 /home/jovyan &&\
-    chown -R 1000:100 /home/jovyan
+    chown -R jovyan:users /home/jovyan
 
 WORKDIR /home/jovyan
 USER jovyan
