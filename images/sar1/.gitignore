@@ -1,9 +1,0 @@
-**
-!.gitignore
-!build.sh
-!dockerfile
-!download.sh
-!pkgs
-!pkgs/**
-!envs
-!envs/**
