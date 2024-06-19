@@ -18,7 +18,7 @@ operating system:
 The image built here is available on the GitHub Container Registry. Pull it onto your
 computer with
 ```bash
-docker pull ghcr.io//ASFOpenSARlab/geos639-image
+docker pull ghcr.io/ASFOpenSARlab/geos639-image
 ```
 
 you can then run the image with
@@ -26,9 +26,9 @@ you can then run the image with
 docker run -it --init -p 8888:8888 geos639-container:latest
 ```
 
-Click the `127.0.0.1:8888` that appears, and you should be able to access the image.
+Click the `127.0.0.1:8888` link that appears, and you should be able to access the image.
 
 ## Building From Source
 
-After cloning the repository, building should be as simple as running `make` in your
-terminal!
+After cloning the repository, building and running the image should be as simple as
+running `make` in your terminal!
