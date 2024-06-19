@@ -18,12 +18,12 @@ operating system:
 This image is also available on the GitHub Container Registry. Pull it onto your
 computer with
 ```bash
-docker pull ghcr.io/ASFOpenSARlab/geos639-image
+docker pull ghcr.io/ASFOpenSARlab/geos639-image:main
 ```
 
 you can then run the image with
 ```bash
-docker run -it --init -p 8888:8888 geos639-container:latest
+docker run -it --init -p 8888:8888 ghcr.io/asfopensarlab/geos639-image:main
 ```
 
 Click the `127.0.0.1:8888` link that appears, and you should be able to access the image.
