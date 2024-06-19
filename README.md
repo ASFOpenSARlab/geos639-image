@@ -7,7 +7,7 @@ Linux (WSL) on Windows.
 
 - [WSL 2 Installation Instructions]( https://docs.microsoft.com/en-us/windows/wsl/install-win10)
 
-This image is provided with Docker. Ensure that you have Docker installed for your
+This image is provided through Docker. Ensure that you have Docker installed for your
 operating system:
 - [Linux instructions](https://docs.docker.com/engine/install/ubuntu/) 
     - Select your Linux flavor from the left sidebar menu.
@@ -15,7 +15,7 @@ operating system:
     - Be sure to follow the WSL2 backend-specific instructions.
 - [Mac Instructions](https://docs.docker.com/desktop/mac/install/)
 
-The image built here is available on the GitHub Container Registry. Pull it onto your
+This image is also available on the GitHub Container Registry. Pull it onto your
 computer with
 ```bash
 docker pull ghcr.io/ASFOpenSARlab/geos639-image
