@@ -1,4 +1,4 @@
-FROM jupyter/base-notebook:lab-4.0.1 as release
+FROM jupyter/base-notebook:ubuntu-20.04 as release
 
 # Base Stage ****************************************************************
 USER root
@@ -125,12 +125,19 @@ RUN python3 -m pip install \
 ### GMTSAR
 ENV PATH=/usr/local/GMTSAR/bin:$PATH
 
+WORKDIR /home/jovyan
+
 RUN chmod -R 775 /home/jovyan &&\
     chown -R jovyan:users /home/jovyan
 
-WORKDIR /home/jovyan
-USER jovyan
 
-RUN mkdir /tmp/helper_scripts
+RUN mkdir -p /tmp/helper_scripts
 COPY helper_scripts/* /tmp/helper_scripts
-RUN bash /tmp/helper_scripts/post_hook.sh
+COPY helper_scripts/entrypoint.sh /entrypoint.sh
+COPY helper_scripts/cmd.sh /cmd.sh
+
+RUN chmod 755 /entrypoint.sh && \
+    chmod 755 /cmd.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/cmd.sh"]

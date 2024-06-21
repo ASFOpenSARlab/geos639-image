@@ -23,10 +23,26 @@ docker pull ghcr.io/ASFOpenSARlab/geos639-image:main
 
 you can then run the image with
 ```bash
-docker run -it --init -p 8888:8888 ghcr.io/asfopensarlab/geos639-image:main
+docker run -it --init --rm -p 8888:8888 -v $(CURDIR)/jupyter-data:/home/jovyan geos639-image:latest
 ```
 
 Click the `127.0.0.1:8888` link that appears, and you should be able to access the image.
+
+### Volume Permissions
+
+If your user account is not the first account on your machine, or more specifically does
+not have UID=1000, the `jupyter-data` directory will not belong to your account. If you
+encounter permission errors, you can take ownership of the directory with
+```bash
+sudo chown -R <YOUR_USERNAME> jupyter-data
+```
+
+If you do this, you may encounter permission errors when starting the container
+(`/home/jovyan is not writable`). In this case, reset the permissions to their original
+state with
+```bash
+sudo chown -R 1000:100 jupyter-data
+```
 
 ## Building From Source
 
